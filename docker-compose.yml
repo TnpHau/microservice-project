@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    image: tnphau/eureka-server:latest
+    ports:
+      - "12003:12003"
+    networks:
+      - microservice-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    image: tnphau/api-gateway:latest
+    ports:
+      - "6789:6789"
+    networks:
+      - microservice-network
+    depends_on:
+      - eureka-server
+      - user-service
+      - product-service
+
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    image: tnphau/product-service:latest
+    ports:
+      - "12002:12002"
+    networks:
+      - microservice-network
+    depends_on:
+      - eureka-server
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    image: tnphau/user-service:latest
+    ports:
+      - "12001:12001"
+    networks:
+      - microservice-network
+    environment:
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/sarah
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+    depends_on:
+      - eureka-server
+
+networks:
+  microservice-network:
+    driver: bridge
